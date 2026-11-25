@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Calculator</title>
+</head>
+<body>
+  <h1>Calculator with memory</h1>
+
+
+
+  <input id="a" type="number" placeholder="First number">
+  <select id="op">
+    <option>+</option>
+    <option>-</option>
+    <option>*</option>
+    <option>/</option>
+  </select>
+  <input id="b" type="number" placeholder="Second number">
+  <button id="calc-btn">Calculate</button>
+
+  <p id="result"></p>
+
+  <h2>History</h2>
+  <ol id="history"></ol>
+  <button id="clear-btn">Clear history</button>
+  <script>
+  async function loadHistory() {
+    const response = await fetch("/history");
+    const data = await response.json();
+    const list = document.getElementById("history");
+    list.innerHTML = "";
+    for (const item of data.history) {
+      const li = document.createElement("li");
+      li.textContent = `${item.expression} = ${item.result}`;
+      list.appendChild(li);
+    }
+  }
+
+  async function calculate() {
+    const a = document.getElementById("a").value;
+    const op = document.getElementById("op").value;
+    const b = document.getElementById("b").value;
+    if (a === "" || b === "") {
+      document.getElementById("result").textContent = "Please enter both numbers";
+      return;
+    }
+    const response = await fetch("/calculate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ a: Number(a), op: op, b: Number(b) })
+    });
+    const data = await response.json();
+    document.getElementById("result").textContent = `Result: ${data.result}`;
+    loadHistory();
+  }
+
+  async function clearHistory() {
+    await fetch("/history", { method: "DELETE" });
+    document.getElementById("result").textContent = "";
+    loadHistory();
+  }
+
+  document.getElementById("calc-btn").addEventListener("click", calculate);
+  document.getElementById("clear-btn").addEventListener("click", clearHistory);
+  loadHistory();
+</script>
+</body>
+</html>
